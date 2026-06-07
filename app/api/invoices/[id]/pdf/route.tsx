@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getInvoiceById } from "@/lib/data/invoices";
 import { InvoicePdfDocument } from "@/lib/pdf/invoice-document";
 import { formatDate } from "@/lib/utils";
+import { numberToWords } from "@/lib/number-to-words";
 
 export async function GET(
   _req: NextRequest,
@@ -33,15 +34,24 @@ export async function GET(
         dueDate: formatDate(invoice.dueDate),
         doctorName: invoice.doctor.user.name,
         clinicName: invoice.doctor.clinicName,
+        doctorAddress: invoice.doctor.address,
         items: invoice.items.map((i) => ({
           description: i.description,
           qty: i.qty,
           unitPrice: i.unitPriceNum,
           total: i.totalNum,
+          gstPercent: 18, // Default GST rate for dental lab services
         })),
         subtotal: invoice.subtotalNum,
         tax: invoice.taxNum,
         total: invoice.totalNum,
+        amountInWords: numberToWords(invoice.totalNum),
+        bankDetails: {
+          bankName: "HDFC Bank",
+          accountNumber: "123456789012",
+          ifscCode: "HDFC0001234",
+          branch: "Main Branch",
+        },
       }}
     />
   );

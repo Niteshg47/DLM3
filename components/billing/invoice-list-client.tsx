@@ -8,6 +8,7 @@ import { InvoiceStatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { InvoiceWithDisplay } from "@/lib/data/invoices";
 import type { DisplayInvoiceStatus } from "@/lib/invoices";
+import { Download } from "lucide-react";
 
 const statusLabels: Record<DisplayInvoiceStatus, string> = {
   DRAFT: "Draft",
@@ -41,6 +42,10 @@ export function InvoiceListClient({ items }: { items: InvoiceWithDisplay[] }) {
       await bulkSendReminderAction(Array.from(selected));
       setSelected(new Set());
     });
+  }
+
+  function downloadPdf(id: string, invoiceNumber: string) {
+    window.open(`/api/invoices/${id}/pdf`, "_blank");
   }
 
   return (
@@ -104,12 +109,23 @@ export function InvoiceListClient({ items }: { items: InvoiceWithDisplay[] }) {
                   />
                 </td>
                 <td className="p-3">
-                  <Link
-                    href={`/billing/${inv.id}`}
-                    className="text-xs text-brand-indigo hover:underline"
-                  >
-                    View
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => downloadPdf(inv.id, inv.invoiceNumber)}
+                    >
+                      <Download className="h-3 w-3 mr-1" />
+                      PDF
+                    </Button>
+                    <Link
+                      href={`/billing/${inv.id}`}
+                      className="text-xs text-brand-indigo hover:underline"
+                    >
+                      View
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

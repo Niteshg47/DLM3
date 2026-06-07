@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   BarChart,
   Bar,
   PieChart,
@@ -169,37 +169,61 @@ export function AnalyticsDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <ChartCard title="Cases over time">
+        <ChartCard title="Revenue over time (INR)">
           <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={data.casesByDay}>
+            <LineChart data={data.revenueByDay}>
               <defs>
-                <linearGradient id="indigoFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
+                <linearGradient id="purpleFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke="#6366F1"
-                fill="url(#indigoFill)"
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94A3B8" }} />
+              <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} />
+              <Tooltip 
+                formatter={(v) => formatCurrency(Number(v))}
+                contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #334155", borderRadius: "8px" }}
+                itemStyle={{ color: "#E2E8F0" }}
               />
-            </AreaChart>
+              <Line 
+                type="monotone" 
+                dataKey="amount" 
+                stroke="#6366F1" 
+                strokeWidth={2}
+                fill="url(#purpleFill)"
+                dot={{ fill: "#6366F1", strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Revenue over time">
+        <ChartCard title="Cases by status">
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={data.revenueByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-              <Bar dataKey="amount" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+            <BarChart data={data.byStatus}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94A3B8" }} />
+              <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #334155", borderRadius: "8px" }}
+                itemStyle={{ color: "#E2E8F0" }}
+              />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {data.byStatus.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={
+                      entry.name === "RECEIVED" ? "#6366F1" :
+                      entry.name === "IN_PROGRESS" ? "#0D9488" :
+                      entry.name === "QC_HOLD" ? "#F59E0B" :
+                      entry.name === "READY" ? "#0EA5E9" :
+                      entry.name === "DELIVERED" ? "#10B981" :
+                      entry.name === "INVOICED" ? "#8B5CF6" :
+                      "#94A3B8"
+                    }
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -213,8 +237,10 @@ export function AnalyticsDashboard() {
                 nameKey="name"
                 cx="50%"
                 cy="50%"
+                innerRadius={40}
                 outerRadius={80}
-                label
+                label={{ fontSize: 11, fill: "#E2E8F0" }}
+                labelLine={{ stroke: "#475569" }}
               >
                 {data.byType.map((entry) => (
                   <Cell
@@ -223,53 +249,40 @@ export function AnalyticsDashboard() {
                   />
                 ))}
               </Pie>
-              <Tooltip />
-              <Legend />
+              <Tooltip 
+                contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #334155", borderRadius: "8px" }}
+                itemStyle={{ color: "#E2E8F0" }}
+              />
+              <Legend 
+                wrapperStyle={{ color: "#E2E8F0", fontSize: 11 }}
+                iconType="circle"
+              />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Pipeline by status">
+        <ChartCard title="Top doctors by case count">
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={data.byStatus} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" tick={{ fontSize: 11 }} />
-              <YAxis
-                dataKey="name"
-                type="category"
+            <BarChart data={data.topDoctors} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} />
+              <YAxis 
+                dataKey="name" 
+                type="category" 
                 width={100}
-                tick={{ fontSize: 10 }}
+                tick={{ fontSize: 10, fill: "#94A3B8" }}
               />
-              <Tooltip />
-              <Bar dataKey="value" fill="#6366F1" radius={[0, 4, 4, 0]} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #334155", borderRadius: "8px" }}
+                itemStyle={{ color: "#E2E8F0" }}
+              />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#F43F5E" />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <ChartCard title="Top doctors by volume">
-          <ul className="space-y-4">
-            {data.topDoctors.map((d) => (
-              <li key={d.name} className="flex items-center gap-3">
-                <AvatarInitials name={d.name} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium truncate">{d.name}</span>
-                    <span className="text-muted-foreground">{d.count}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className="h-full bg-brand-indigo rounded-full transition-all duration-200"
-                      style={{ width: `${(d.count / maxDoctorCount) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </ChartCard>
-
         <ChartCard title="Staff productivity">
           <table className="w-full text-sm">
             <thead>
@@ -312,8 +325,8 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-card transition-all duration-200 hover:shadow-md">
-      <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
+    <div className="rounded-xl bg-slate-900 p-5 shadow-card transition-all duration-200 hover:shadow-lg border border-slate-800">
+      <h3 className="font-semibold text-white mb-4">{title}</h3>
       {children}
     </div>
   );
