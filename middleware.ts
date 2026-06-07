@@ -48,7 +48,7 @@ export default auth((req) => {
   }
 
   if (!tenantSlug && !pathname.startsWith("/api/health")) {
-    return NextResponse.redirect(new URL("https://dentallab.app", req.url));
+    return NextResponse.redirect(new URL("https://dlm-3.vercel.app", req.url));
   }
 
   if (isPublicPath(pathname)) {
