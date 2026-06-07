@@ -1,0 +1,96 @@
+{
+  "common": {
+    "appName": "Dental Lab Portal",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "back": "Back",
+    "submit": "Submit",
+    "noResults": "No results found",
+    "error": "Something went wrong"
+  },
+  "auth": {
+    "login": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "magicLink": "Send magic link",
+    "magicLinkSent": "Check your email for a sign-in link",
+    "invalidCredentials": "Invalid email or password",
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "cases": "Cases",
+    "tasks": "Tasks",
+    "billing": "Billing",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "portal": "My Cases"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "casesToday": "Cases today",
+    "pendingQc": "Pending QC",
+    "overdue": "Overdue",
+    "revenueMonth": "Revenue this month",
+    "pipeline": "Case pipeline",
+    "activity": "Recent activity"
+  },
+  "cases": {
+    "title": "Cases",
+    "newCase": "New case",
+    "caseNumber": "Case #",
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "type": "Type",
+    "priority": "Priority",
+    "status": "Status",
+    "dueDate": "Due date",
+    "received": "Received",
+    "details": "Case details",
+    "timeline": "Timeline",
+    "attachments": "Attachments",
+    "tasks": "Tasks",
+    "notes": "Notes",
+    "updateStatus": "Update status",
+    "print": "Print case sheet"
+  },
+  "caseStatus": {
+    "RECEIVED": "Received",
+    "IN_PROGRESS": "In progress",
+    "QC_HOLD": "QC hold",
+    "READY": "Ready",
+    "DELIVERED": "Delivered",
+    "INVOICED": "Invoiced"
+  },
+  "caseType": {
+    "CROWN": "Crown",
+    "BRIDGE": "Bridge",
+    "DENTURE": "Denture",
+    "IMPLANT": "Implant",
+    "ALIGNER": "Aligner",
+    "OTHER": "Other"
+  },
+  "priority": {
+    "NORMAL": "Normal",
+    "URGENT": "Urgent",
+    "STAT": "STAT"
+  },
+  "doctor": {
+    "portalTitle": "Doctor Portal",
+    "submitCase": "Submit new case",
+    "myCases": "My cases",
+    "trackCase": "Track case"
+  },
+  "onboarding": {
+    "title": "Set up your lab",
+    "labName": "Lab name",
+    "brandColor": "Brand color",
+    "logo": "Logo URL"
+  }
+}

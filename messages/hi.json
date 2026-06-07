@@ -1,0 +1,96 @@
+{
+  "common": {
+    "appName": "डेंटल लैब पोर्टल",
+    "loading": "लोड हो रहा है...",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "actions": "कार्रवाई",
+    "back": "वापस",
+    "submit": "जमा करें",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "error": "कुछ गलत हो गया"
+  },
+  "auth": {
+    "login": "साइन इन",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "magicLink": "मैजिक लिंक भेजें",
+    "magicLinkSent": "साइन-इन लिंक के लिए अपना ईमेल देखें",
+    "invalidCredentials": "अमान्य ईमेल या पासवर्ड",
+    "signOut": "साइन आउट"
+  },
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "cases": "केस",
+    "tasks": "कार्य",
+    "billing": "बिलिंग",
+    "analytics": "विश्लेषण",
+    "settings": "सेटिंग्स",
+    "portal": "मेरे केस"
+  },
+  "dashboard": {
+    "title": "डैशबोर्ड",
+    "casesToday": "आज के केस",
+    "pendingQc": "लंबित QC",
+    "overdue": "अतिदेय",
+    "revenueMonth": "इस महीने की आय",
+    "pipeline": "केस पाइपलाइन",
+    "activity": "हाल की गतिविधि"
+  },
+  "cases": {
+    "title": "केस",
+    "newCase": "नया केस",
+    "caseNumber": "केस #",
+    "patient": "मरीज",
+    "doctor": "डॉक्टर",
+    "type": "प्रकार",
+    "priority": "प्राथमिकता",
+    "status": "स्थिति",
+    "dueDate": "नियत तिथि",
+    "received": "प्राप्त",
+    "details": "केस विवरण",
+    "timeline": "समयरेखा",
+    "attachments": "संलग्नक",
+    "tasks": "कार्य",
+    "notes": "नोट्स",
+    "updateStatus": "स्थिति अपडेट करें",
+    "print": "केस शीट प्रिंट करें"
+  },
+  "caseStatus": {
+    "RECEIVED": "प्राप्त",
+    "IN_PROGRESS": "प्रगति में",
+    "QC_HOLD": "QC होल्ड",
+    "READY": "तैयार",
+    "DELIVERED": "वितरित",
+    "INVOICED": "चालान किया"
+  },
+  "caseType": {
+    "CROWN": "क्राउन",
+    "BRIDGE": "ब्रिज",
+    "DENTURE": "डेंचर",
+    "IMPLANT": "इम्प्लांट",
+    "ALIGNER": "अलाइनर",
+    "OTHER": "अन्य"
+  },
+  "priority": {
+    "NORMAL": "सामान्य",
+    "URGENT": "जरूरी",
+    "STAT": "तत्काल"
+  },
+  "doctor": {
+    "portalTitle": "डॉक्टर पोर्टल",
+    "submitCase": "नया केस जमा करें",
+    "myCases": "मेरे केस",
+    "trackCase": "केस ट्रैक करें"
+  },
+  "onboarding": {
+    "title": "अपनी लैब सेट करें",
+    "labName": "लैब का नाम",
+    "brandColor": "ब्रांड रंग",
+    "logo": "लोगो URL"
+  }
+}

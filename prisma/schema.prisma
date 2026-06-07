@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  LAB_STAFF
+  DOCTOR
+}
+
+enum CaseType {
+  CROWN
+  BRIDGE
+  DENTURE
+  IMPLANT
+  ALIGNER
+  OTHER
+}
+
+enum CasePriority {
+  NORMAL
+  URGENT
+  STAT
+}
+
+enum CaseStatus {
+  RECEIVED
+  IN_PROGRESS
+  QC_HOLD
+  READY
+  DELIVERED
+  INVOICED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+}
+
+enum TenantPlan {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model Tenant {
+  id              String     @id @default(cuid())
+  slug            String     @unique
+  name            String
+  logoUrl         String?
+  brandColor      String     @default("#0ea5e9")
+  customDomain    String?
+  plan            TenantPlan @default(STARTER)
+  gstNumber       String?
+  address         String?
+  whatsappEnabled Boolean    @default(false)
+  onboardingDone  Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  users         User[]
+  doctors       Doctor[]
+  cases         Case[]
+  tasks         Task[]
+  invoices      Invoice[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  whatsappLogs  WhatsAppMessageLog[]
+
+  accounts Account[]
+  sessions Session[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  name         String
+  email        String
+  passwordHash String?
+  role         UserRole
+  language     String   @default("en")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor        Doctor?
+  assignedTasks Task[]         @relation("AssignedTasks")
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  accounts Account[]
+  sessions Session[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Doctor {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String   @unique
+  clinicName String
+  phone      String?
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cases    Case[]
+  invoices Invoice[]
+
+  @@index([tenantId])
+}
+
+model Case {
+  id            String       @id @default(cuid())
+  tenantId      String
+  caseNumber    String
+  doctorId      String
+  patientName   String
+  patientAge    Int?
+  patientGender String?
+  caseType      CaseType
+  priority      CasePriority @default(NORMAL)
+  receivedAt    DateTime     @default(now())
+  dueDate       DateTime?
+  deliveredAt   DateTime?
+  status        CaseStatus   @default(RECEIVED)
+  notes         String?
+  attachments   String[]     @default([])
+  shade         String?
+  units         Int          @default(1)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor       Doctor               @relation(fields: [doctorId], references: [id])
+  tasks        Task[]
+  invoices     Invoice[]
+  whatsappLogs WhatsAppMessageLog[]
+
+  @@unique([tenantId, caseNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, doctorId])
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  tenantId     String
+  caseId       String
+  assignedToId String?
+  title        String
+  status       TaskStatus @default(TODO)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  case       Case   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignedTo User?  @relation("AssignedTasks", fields: [assignedToId], references: [id])
+
+  @@index([tenantId, assignedToId])
+  @@index([caseId])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  tenantId      String
+  caseId        String?
+  doctorId      String
+  invoiceNumber String
+  issuedAt      DateTime      @default(now())
+  dueDate       DateTime?
+  paidAt        DateTime?
+  status        InvoiceStatus @default(DRAFT)
+  subtotal      Decimal       @default(0) @db.Decimal(12, 2)
+  tax           Decimal       @default(0) @db.Decimal(12, 2)
+  total         Decimal       @default(0) @db.Decimal(12, 2)
+  currency      String        @default("INR")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  case   Case?         @relation(fields: [caseId], references: [id])
+  doctor Doctor        @relation(fields: [doctorId], references: [id])
+  items  InvoiceItem[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId, status])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  qty         Int     @default(1)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  total       Decimal @db.Decimal(12, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, read])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, createdAt])
+}
+
+model WhatsAppMessageLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  caseId    String?
+  toPhone   String
+  template  String
+  status    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  case   Case?  @relation(fields: [caseId], references: [id])
+
+  @@index([tenantId, caseId])
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  tenantId          String?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  tenantId     String?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model MagicLinkToken {
+  id        String   @id @default(cuid())
+  email     String
+  tenantId  String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, tenantId])
+}
