@@ -131,7 +131,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             {data.logoUrl ? (
-              <Image src={data.logoUrl} style={{ width: 100, height: 50 }} />
+              <Image src={data.logoUrl} style={{ width: 100, height: 50 }} /> // eslint-disable-line jsx-a11y/alt-text
             ) : (
               <View style={{ 
                 width: 60, 
