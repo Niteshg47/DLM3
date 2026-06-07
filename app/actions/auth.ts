@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { loginSchema, magicLinkSchema } from "@/lib/validations/auth";
 import { sendMagicLinkEmail } from "@/lib/email";
 import { checkAuthRateLimit } from "@/lib/ratelimit";
+import { generateAndStoreOtp, sendOtpEmail } from "@/lib/otp";
 import { randomBytes } from "crypto";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
@@ -12,7 +13,7 @@ import { redirect } from "next/navigation";
 export async function loginAction(
   tenantId: string,
   formData: FormData
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; requiresOtp?: boolean; userId?: string; email?: string; otp?: string }> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -27,9 +28,47 @@ export async function loginAction(
     return { error: "rate_limited" };
   }
 
+  const email = parsed.data.email.toLowerCase();
+
+  // Check if user exists and get their role before signing in
+  const user = await prisma.user.findUnique({
+    where: {
+      tenantId_email: { tenantId, email },
+    },
+  });
+
+  if (!user || !user.active) {
+    return { error: "invalid_credentials" };
+  }
+
+  // Verify password
+  const bcrypt = require("bcryptjs");
+  if (!user.passwordHash) {
+    return { error: "invalid_credentials" };
+  }
+
+  const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+  if (!valid) {
+    return { error: "invalid_credentials" };
+  }
+
+  // If user is ADMIN, generate and send OTP
+  if (user.role === "ADMIN") {
+    const otp = await generateAndStoreOtp(tenantId, user.id, email);
+    await sendOtpEmail(email, otp);
+    
+    return {
+      requiresOtp: true,
+      userId: user.id,
+      email: email,
+      otp: otp, // Return OTP to display in UI for now
+    };
+  }
+
+  // For non-ADMIN users, proceed with normal login
   try {
     await signIn("credentials", {
-      email: parsed.data.email.toLowerCase(),
+      email,
       password: parsed.data.password,
       tenantId,
       redirect: false,
@@ -41,21 +80,62 @@ export async function loginAction(
     throw e;
   }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      tenantId_email: {
-        tenantId,
-        email: parsed.data.email.toLowerCase(),
-      },
-    },
-  });
-
-  if (user?.role === "DOCTOR") {
+  if (user.role === "DOCTOR") {
     redirect("/doctor/portal");
   }
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (tenant && !tenant.onboardingDone && user?.role === "ADMIN") {
+  if (tenant && !tenant.onboardingDone) {
+    redirect("/onboarding");
+  }
+
+  redirect("/dashboard");
+}
+
+export async function verifyOtpAction(
+  tenantId: string,
+  userId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const otp = formData.get("otp") as string;
+  
+  if (!otp || otp.length !== 6) {
+    return { error: "invalid_otp" };
+  }
+
+  const { verifyOtp } = await import("@/lib/otp");
+  const isValid = await verifyOtp(tenantId, userId, otp);
+
+  if (!isValid) {
+    return { error: "invalid_otp" };
+  }
+
+  // Get user email for sign in
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return { error: "invalid_otp" };
+  }
+
+  // Sign in the user (password already verified)
+  try {
+    await signIn("credentials", {
+      email: user.email,
+      password: "", // Password already verified, just need to create session
+      tenantId,
+      redirect: false,
+    });
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return { error: "invalid_otp" };
+    }
+    throw e;
+  }
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  if (tenant && !tenant.onboardingDone) {
     redirect("/onboarding");
   }
 

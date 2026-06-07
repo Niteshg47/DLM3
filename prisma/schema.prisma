@@ -316,3 +316,14 @@ model MagicLinkToken {
 
   @@index([email, tenantId])
 }
+
+model AdminOtp {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  otp       String
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, userId])
+}

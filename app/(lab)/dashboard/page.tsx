@@ -7,12 +7,15 @@ import { StatCard } from "@/components/shared/stat-card";
 import { CasePipeline } from "@/components/lab/case-pipeline";
 import { ActivityFeed } from "@/components/lab/activity-feed";
 import { FolderPlus, ShieldAlert, AlertTriangle, IndianRupee } from "lucide-react";
+import { auth } from "@/lib/auth";
 
 export default async function DashboardPage() {
+  const session = await auth();
   const tenant = await getTenantFromRequest();
   const t = await getTranslations("dashboard");
   const tStatus = await getTranslations("caseStatus");
   const stats = await getDashboardStats(tenant.id);
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const statusLabels: Record<string, string> = {
     RECEIVED: tStatus("RECEIVED"),
@@ -27,7 +30,7 @@ export default async function DashboardPage() {
     <div>
       <PageHeader title={t("title")} description={`Welcome back · ${tenant.name}`} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className={`grid gap-4 mb-6 ${isAdmin ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
         <StatCard
           title={t("casesToday")}
           value={stats.casesToday}
@@ -50,14 +53,16 @@ export default async function DashboardPage() {
           borderClass="gradient-border-top-rose"
           iconBg="bg-rose-100 text-brand-rose"
         />
-        <StatCard
-          title={t("revenueMonth")}
-          value={formatCurrency(stats.revenueMonth)}
-          trend="+8% vs last month"
-          icon={IndianRupee}
-          borderClass="gradient-border-top-purple"
-          iconBg="bg-purple-100 text-brand-purple"
-        />
+        {isAdmin && (
+          <StatCard
+            title={t("revenueMonth")}
+            value={formatCurrency(stats.revenueMonth)}
+            trend="+8% vs last month"
+            icon={IndianRupee}
+            borderClass="gradient-border-top-purple"
+            iconBg="bg-purple-100 text-brand-purple"
+          />
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

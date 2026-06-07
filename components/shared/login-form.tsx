@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { loginAction, magicLinkAction } from "@/app/actions/auth";
+import { loginAction, magicLinkAction, verifyOtpAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OtpInput } from "@/components/shared/otp-input";
 
 export function LoginForm({
   tenantId,
@@ -20,6 +21,11 @@ export function LoginForm({
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [otpMode, setOtpMode] = useState(false);
+  const [otpUserId, setOtpUserId] = useState<string | null>(null);
+  const [otpEmail, setOtpEmail] = useState<string | null>(null);
+  const [otpValue, setOtpValue] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   function handlePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -28,6 +34,58 @@ export function LoginForm({
       const result = await loginAction(tenantId, formData);
       if (result?.error) {
         setMessage(t("invalidCredentials"));
+      } else if (result?.requiresOtp) {
+        setOtpMode(true);
+        setOtpUserId(result.userId || null);
+        setOtpEmail(result.email || null);
+        setOtpValue(result.otp || null);
+        setMessage(`OTP sent to your email: ${result.email}`);
+        setResendCooldown(60);
+        const cooldownInterval = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(cooldownInterval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    });
+  }
+
+  function handleOtpSubmit(otp: string) {
+    const formData = new FormData();
+    formData.append("otp", otp);
+    startTransition(async () => {
+      const result = await verifyOtpAction(tenantId, otpUserId || "", formData);
+      if (result?.error) {
+        setMessage("Invalid OTP. Please try again.");
+      }
+    });
+  }
+
+  function handleResendOtp() {
+    if (resendCooldown > 0 || !otpEmail) return;
+    
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("email", otpEmail);
+      formData.append("password", ""); // Password already verified
+      const result = await loginAction(tenantId, formData);
+      if (result?.otp) {
+        setOtpValue(result.otp);
+        setMessage(`New OTP sent to your email: ${result.email}`);
+        setResendCooldown(60);
+        const cooldownInterval = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(cooldownInterval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       }
     });
   }
@@ -45,11 +103,55 @@ export function LoginForm({
     });
   }
 
+  if (otpMode) {
+    return (
+      <div className="space-y-4">
+        {message && (
+          <p className="text-sm text-emerald-600" role="alert">
+            {message}
+          </p>
+        )}
+        {otpValue && (
+          <p className="text-sm font-semibold text-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            OTP: {otpValue}
+          </p>
+        )}
+        <div className="space-y-4">
+          <div className="text-center">
+            <Label className="text-base font-medium">Enter the 6-digit OTP</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Check your email for the verification code
+            </p>
+          </div>
+          <OtpInput onComplete={handleOtpSubmit} disabled={pending} />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleResendOtp}
+            disabled={resendCooldown > 0 || pending}
+          >
+            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend OTP"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => setOtpMode(false)}
+            disabled={pending}
+          >
+            Back to login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
         {(error || message) && (
           <p
-            className={`text-sm ${message?.includes("Check") ? "text-emerald-600" : "text-destructive"}`}
+            className={`text-sm ${message?.includes("Check") || message?.includes("OTP") ? "text-emerald-600" : "text-destructive"}`}
             role="alert"
           >
             {error === "expired"
