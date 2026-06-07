@@ -15,7 +15,7 @@ function extractSubdomain(host: string): string | null {
   const rootHost = ROOT_DOMAIN.split(":")[0].toLowerCase();
 
   if (hostname === rootHost || hostname === `www.${rootHost}`) {
-    return null;
+    return process.env.DEV_TENANT_SLUG ?? "demo";
   }
 
   if (hostname.endsWith(`.${APP_DOMAIN}`)) {
