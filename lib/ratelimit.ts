@@ -5,7 +5,8 @@ function createRatelimit() {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  if (!url || !token) {
+  // Return null if env vars are missing or set to placeholder values
+  if (!url || !token || url === "placeholder" || token === "placeholder") {
     return null;
   }
 

@@ -28,6 +28,8 @@ function extractSubdomain(host: string): string | null {
     if (slug && slug !== "www") return slug;
   }
 
+  // For Vercel deployment (dlm-3.vercel.app) or any other domain,
+  // fall back to demo tenant
   return process.env.DEV_TENANT_SLUG ?? "demo";
 }
 
