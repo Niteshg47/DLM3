@@ -46,6 +46,7 @@ export const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" },
         tenantId: { label: "Tenant", type: "text" },
         magicToken: { label: "Magic Token", type: "text" },
+        otpVerified: { label: "OTP Verified", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.tenantId) {
@@ -70,6 +71,8 @@ export const authConfig: NextAuthConfig = {
           }
 
           await prisma.magicLinkToken.delete({ where: { token: record.token } });
+        } else if (credentials.otpVerified) {
+          // OTP already verified, skip password check
         } else {
           if (!credentials.password) return null;
 

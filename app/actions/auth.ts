@@ -119,12 +119,13 @@ export async function verifyOtpAction(
     return { error: "invalid_otp" };
   }
 
-  // Sign in the user (password already verified)
+  // Sign in the user (OTP already verified)
   try {
     await signIn("credentials", {
       email: user.email,
-      password: "", // Password already verified, just need to create session
+      password: "", // Not needed when OTP is verified
       tenantId,
+      otpVerified: "true", // Bypass password check since OTP was verified
       redirect: false,
     });
   } catch (e) {
