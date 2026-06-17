@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { FileUpload, type UploadedFile } from "@/components/shared/FileUpload";
 
 const caseTypes = ["CROWN", "BRIDGE", "DENTURE", "IMPLANT", "ALIGNER", "OTHER"] as const;
 const priorities = ["NORMAL", "URGENT", "STAT"] as const;
@@ -32,6 +33,7 @@ export function CaseForm({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const form = useForm<CreateCaseInput>({
     resolver: zodResolver(createCaseSchema),
@@ -47,6 +49,10 @@ export function CaseForm({
     Object.entries(data).forEach(([k, v]) => {
       if (v !== undefined && v !== null) fd.append(k, String(v));
     });
+    // Attach any pre-uploaded S3 file metadata so the server action can persist them
+    if (uploadedFiles.length > 0) {
+      fd.append("uploadedFiles", JSON.stringify(uploadedFiles));
+    }
 
     startTransition(async () => {
       const result = await createCaseAction(fd);
@@ -165,6 +171,13 @@ export function CaseForm({
               {...form.register("notes")}
             />
           </div>
+
+          {/* File attachments — available to ADMIN and LAB_STAFF */}
+          <FileUpload
+            value={uploadedFiles}
+            onFilesChange={setUploadedFiles}
+            disabled={pending}
+          />
 
           <Button type="submit" disabled={pending}>
             {caseId ? "Save changes" : "Create case"}

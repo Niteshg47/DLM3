@@ -58,6 +58,39 @@ export async function createCaseAction(formData: FormData) {
     },
   });
 
+  // Link any pre-uploaded S3 files to the newly created case
+  const uploadedFilesStr = formData.get("uploadedFiles") as string;
+  if (uploadedFilesStr) {
+    try {
+      const uploadedFiles = JSON.parse(uploadedFilesStr) as {
+        name: string;
+        size: number;
+        mimeType: string;
+        s3Key: string;
+      }[];
+
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        await Promise.all(
+          uploadedFiles.map((file) =>
+            prisma.caseFile.create({
+              data: {
+                caseId: newCase.id,
+                tenantId: tenant.id,
+                name: file.name,
+                size: file.size,
+                mimeType: file.mimeType,
+                s3Key: file.s3Key,
+                uploadedBy: session.user.id,
+              },
+            })
+          )
+        );
+      }
+    } catch (e) {
+      console.error("Failed to link uploaded files to case:", e);
+    }
+  }
+
   await logAudit({
     tenantId: tenant.id,
     userId: session.user.id,
