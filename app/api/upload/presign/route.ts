@@ -10,6 +10,17 @@ export async function POST(request: Request) {
 
   const tenantId = session.user.tenantId;
 
+  // Validate S3 configuration before doing any work
+  const s3Bucket = process.env.S3_BUCKET;
+  const s3Region = process.env.S3_REGION;
+  if (!s3Bucket || !s3Region) {
+    console.error("[S3 Presign] Missing env vars — S3_BUCKET:", s3Bucket, "S3_REGION:", s3Region);
+    return NextResponse.json(
+      { error: "Server misconfiguration: S3_BUCKET or S3_REGION is not set." },
+      { status: 500 }
+    );
+  }
+
   try {
     const { filename, mimeType, size, caseId = "pending" } = await request.json();
 
@@ -54,6 +65,8 @@ export async function POST(request: Request) {
     // Generate unique S3 key
     const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const s3Key = `${tenantId}/${caseId}/${Date.now()}-${safeFilename}`;
+
+    console.log("[S3 Presign] bucket:", s3Bucket, "| key:", s3Key);
 
     // Get presigned PUT URL
     const { url } = await getUploadPresignedUrl(s3Key, mimeType);

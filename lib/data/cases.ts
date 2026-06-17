@@ -61,6 +61,7 @@ export async function getCases(
         doctor: {
           include: { user: { select: { name: true } } },
         },
+        _count: { select: { files: true } },
       },
     }),
     prisma.case.count({ where }),

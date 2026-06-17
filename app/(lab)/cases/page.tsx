@@ -10,6 +10,7 @@ import { AvatarInitials } from "@/components/shared/avatar-initials";
 import { CaseFilters } from "@/components/lab/case-filters";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Paperclip } from "lucide-react";
 import type { CaseStatus, CaseType, CasePriority } from "@prisma/client";
 
 export default async function CasesPage({
@@ -77,6 +78,9 @@ export default async function CasesPage({
                   <th className="text-left p-3 font-semibold hidden sm:table-cell">{t("type")}</th>
                   <th className="text-left p-3 font-semibold">{t("status")}</th>
                   <th className="text-left p-3 font-semibold hidden lg:table-cell">{t("dueDate")}</th>
+                  <th className="text-left p-3 font-semibold hidden sm:table-cell" title="Attachments">
+                    <Paperclip className="h-4 w-4" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -113,6 +117,14 @@ export default async function CasesPage({
                     </td>
                     <td className="p-3 hidden lg:table-cell text-muted-foreground">
                       {formatDate(c.dueDate)}
+                    </td>
+                    <td className="p-3 hidden sm:table-cell">
+                      {c._count.files > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 font-medium">
+                          <Paperclip className="h-3 w-3" />
+                          {c._count.files}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

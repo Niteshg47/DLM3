@@ -11,6 +11,17 @@ export async function POST(request: Request) {
 
   const tenantId = session.user.tenantId;
 
+  // Validate S3 configuration before doing any work
+  const s3Bucket = process.env.S3_BUCKET;
+  const s3Region = process.env.S3_REGION;
+  if (!s3Bucket || !s3Region) {
+    console.error("[S3 Upload] Missing env vars — S3_BUCKET:", s3Bucket, "S3_REGION:", s3Region);
+    return NextResponse.json(
+      { error: "Server misconfiguration: S3_BUCKET or S3_REGION is not set." },
+      { status: 500 }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -54,6 +65,8 @@ export async function POST(request: Request) {
     // Generate unique S3 key
     const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const s3Key = `${tenantId}/${caseId || "pending"}/${Date.now()}-${safeFilename}`;
+
+    console.log("[S3 Upload] bucket:", s3Bucket, "| key:", s3Key);
 
     // Read file into Buffer
     const arrayBuffer = await file.arrayBuffer();

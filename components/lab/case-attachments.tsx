@@ -218,7 +218,11 @@ export function CaseAttachments({ caseId, initialFiles, isAdmin }: CaseAttachmen
                 <div className="flex items-center gap-1.5 shrink-0">
                   {file.url ? (
                     <Button variant="ghost" size="icon" asChild title="Download">
-                      <a href={file.url} target="_blank" rel="noopener noreferrer" download={file.name}>
+                      <a
+                        href={`/api/upload/download?key=${encodeURIComponent(file.s3Key)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <Download className="h-4 w-4 text-slate-600" />
                       </a>
                     </Button>
