@@ -9,6 +9,9 @@ import { CaseStatusUpdater } from "@/components/lab/case-status-updater";
 import { CaseTimeline } from "@/components/lab/case-timeline";
 import { Button } from "@/components/ui/button";
 import { FileText, Receipt } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { getSignedUrl } from "@/lib/s3";
+import { CaseAttachments } from "@/components/lab/case-attachments";
 
 export default async function CaseDetailPage({
   params,
@@ -17,6 +20,9 @@ export default async function CaseDetailPage({
 }) {
   const { id } = await params;
   const tenant = await getTenantFromRequest();
+  const session = await auth();
+  const isAdmin = session?.user?.role === "ADMIN";
+
   const t = await getTranslations("cases");
   const tStatus = await getTranslations("caseStatus");
   const tType = await getTranslations("caseType");
@@ -24,6 +30,18 @@ export default async function CaseDetailPage({
 
   const caseData = await getCaseById(tenant.id, id);
   if (!caseData) notFound();
+
+  const filesWithUrls = await Promise.all(
+    (caseData.files || []).map(async (file) => ({
+      id: file.id,
+      name: file.name,
+      size: file.size,
+      mimeType: file.mimeType,
+      s3Key: file.s3Key,
+      createdAt: file.createdAt.toISOString(),
+      url: await getSignedUrl(file.s3Key),
+    }))
+  );
 
   const statusLabels: Record<string, string> = {
     RECEIVED: tStatus("RECEIVED"),
@@ -101,22 +119,11 @@ export default async function CaseDetailPage({
 
           <CaseTimeline currentStatus={caseData.status} statusLabels={statusLabels} />
 
-          {caseData.attachments.length > 0 && (
-            <div className="rounded-xl bg-white p-6 shadow-card">
-              <h3 className="font-semibold mb-3">{t("attachments")}</h3>
-              <div className="flex flex-wrap gap-3">
-                {caseData.attachments.map((key, i) => (
-                  <div
-                    key={i}
-                    className="h-20 w-20 rounded-lg bg-slate-100 border flex items-center justify-center text-2xl"
-                    title={key}
-                  >
-                    📎
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <CaseAttachments
+            caseId={caseData.id}
+            initialFiles={filesWithUrls}
+            isAdmin={isAdmin}
+          />
 
           {caseData.notes && (
             <div className="rounded-xl bg-white p-6 shadow-card">

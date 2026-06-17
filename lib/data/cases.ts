@@ -78,6 +78,9 @@ export async function getCaseById(tenantId: string, caseId: string) {
         include: { assignedTo: { select: { id: true, name: true } } },
         orderBy: { createdAt: "asc" },
       },
+      files: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 }

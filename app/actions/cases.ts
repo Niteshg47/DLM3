@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireLabRole, requireDoctorRole, auth } from "@/lib/auth";
+import { requireLabRole, requireDoctorRole, requireAdminRole, auth } from "@/lib/auth";
 import { requireTenant } from "@/lib/tenant";
+import { deleteFile } from "@/lib/s3";
 import {
   createCaseSchema,
   updateCaseSchema,
@@ -244,6 +245,39 @@ export async function doctorSubmitCaseAction(formData: FormData) {
     },
   });
 
+  // Link uploaded files to the newly created case
+  const uploadedFilesStr = formData.get("uploadedFiles") as string;
+  if (uploadedFilesStr) {
+    try {
+      const uploadedFiles = JSON.parse(uploadedFilesStr) as {
+        name: string;
+        size: number;
+        mimeType: string;
+        s3Key: string;
+      }[];
+
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        await Promise.all(
+          uploadedFiles.map((file) =>
+            prisma.caseFile.create({
+              data: {
+                caseId: newCase.id,
+                tenantId: tenant.id,
+                name: file.name,
+                size: file.size,
+                mimeType: file.mimeType,
+                s3Key: file.s3Key,
+                uploadedBy: session.user.id,
+              },
+            })
+          )
+        );
+      }
+    } catch (e) {
+      console.error("Failed to link uploaded files to case:", e);
+    }
+  }
+
   await logAudit({
     tenantId: tenant.id,
     userId: session.user.id,
@@ -255,6 +289,44 @@ export async function doctorSubmitCaseAction(formData: FormData) {
 
   revalidatePath("/doctor/portal");
   return { success: true, id: newCase.id };
+}
+
+export async function deleteCaseFileAction(fileId: string) {
+  const session = await requireAdminRole();
+  const tenant = await requireTenant();
+
+  const caseFile = await prisma.caseFile.findFirst({
+    where: { id: fileId, tenantId: tenant.id },
+  });
+
+  if (!caseFile) {
+    return { error: "not_found" };
+  }
+
+  try {
+    // Delete from S3
+    await deleteFile(caseFile.s3Key);
+
+    // Delete from DB
+    await prisma.caseFile.delete({
+      where: { id: fileId },
+    });
+
+    // Log audit
+    await logAudit({
+      tenantId: tenant.id,
+      userId: session.user.id,
+      action: "DELETE",
+      entity: "CaseFile",
+      entityId: fileId,
+      meta: { name: caseFile.name },
+    });
+
+    revalidatePath(`/cases/${caseFile.caseId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete file" };
+  }
 }
 
 export async function addCaseAttachmentAction(caseId: string, key: string) {
