@@ -17,13 +17,11 @@ export default async function DoctorPortalPage() {
   let tCases: Awaited<ReturnType<typeof getTranslations>>;
 
   try {
-    [session, tenant, t, tStatus, tCases] = await Promise.all([
-      auth(),
-      getTenantFromRequest(),
-      getTranslations("doctor"),
-      getTranslations("caseStatus"),
-      getTranslations("cases"),
-    ]);
+    session = await auth();
+    tenant = await getTenantFromRequest();
+    t = await getTranslations("doctor");
+    tStatus = await getTranslations("caseStatus");
+    tCases = await getTranslations("cases");
   } catch (err) {
     console.error("[DoctorPortalPage] init failed:", err);
     return (

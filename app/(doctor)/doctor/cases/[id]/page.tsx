@@ -20,13 +20,11 @@ export default async function DoctorCaseDetailPage({
   let tStatus: Awaited<ReturnType<typeof getTranslations>>;
 
   try {
-    [{ id }, session, tenant, t, tStatus] = await Promise.all([
-      params,
-      auth(),
-      getTenantFromRequest(),
-      getTranslations("cases"),
-      getTranslations("caseStatus"),
-    ]);
+    ({ id } = await params);
+    session = await auth();
+    tenant = await getTenantFromRequest();
+    t = await getTranslations("cases");
+    tStatus = await getTranslations("caseStatus");
   } catch (err) {
     console.error("[DoctorCaseDetailPage] init failed:", err);
     return (
