@@ -41,6 +41,7 @@ export default async function EditInvoicePage({
         }))}
         defaultIssuedAt={invoice.issuedAt.toISOString().slice(0, 10)}
         defaultDueDate={invoice.dueDate?.toISOString().slice(0, 10)}
+        defaultApplyGst={invoice.taxNum > 0}
       />
     </div>
   );

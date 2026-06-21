@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { Receipt, Wallet, AlertCircle, FileEdit, Download } from "lucide-react";
 import type { InvoiceStatus } from "@prisma/client";
+import { auth } from "@/lib/auth";
 
 export default async function BillingPage({
   searchParams,
@@ -19,9 +20,13 @@ export default async function BillingPage({
     page?: string;
   }>;
 }) {
-  let tenant, params;
+  let tenant, params, session;
   try {
-    [tenant, params] = await Promise.all([getTenantFromRequest(), searchParams]);
+    [tenant, params, session] = await Promise.all([
+      getTenantFromRequest(),
+      searchParams,
+      auth(),
+    ]);
   } catch (err) {
     console.error("[BillingPage] init failed:", err);
     return (
@@ -33,6 +38,7 @@ export default async function BillingPage({
   }
 
   const page = parseInt(params.page ?? "1", 10);
+  const isAdmin = session?.user?.role === "ADMIN";
 
   let summaries, items, total, totalPages;
   try {
@@ -75,36 +81,38 @@ export default async function BillingPage({
         </Button>
       </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <StatCard
-          title="Total billed"
-          value={formatCurrency(summaries.totalBilled)}
-          icon={Receipt}
-          borderClass="gradient-border-top-purple"
-          iconBg="bg-purple-100 text-brand-purple"
-        />
-        <StatCard
-          title="Collected"
-          value={formatCurrency(summaries.totalPaid)}
-          icon={Wallet}
-          borderClass="gradient-border-top-teal"
-          iconBg="bg-teal-100 text-brand-teal"
-        />
-        <StatCard
-          title="Overdue"
-          value={formatCurrency(summaries.overdue)}
-          icon={AlertCircle}
-          borderClass="gradient-border-top-rose"
-          iconBg="bg-rose-100 text-brand-rose"
-        />
-        <StatCard
-          title="Draft"
-          value={formatCurrency(summaries.draft)}
-          icon={FileEdit}
-          borderClass="gradient-border-top-amber"
-          iconBg="bg-amber-100 text-brand-amber"
-        />
-      </div>
+      {isAdmin && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+          <StatCard
+            title="Total billed"
+            value={formatCurrency(summaries.totalBilled)}
+            icon={Receipt}
+            borderClass="gradient-border-top-purple"
+            iconBg="bg-purple-100 text-brand-purple"
+          />
+          <StatCard
+            title="Collected"
+            value={formatCurrency(summaries.totalPaid)}
+            icon={Wallet}
+            borderClass="gradient-border-top-teal"
+            iconBg="bg-teal-100 text-brand-teal"
+          />
+          <StatCard
+            title="Overdue"
+            value={formatCurrency(summaries.overdue)}
+            icon={AlertCircle}
+            borderClass="gradient-border-top-rose"
+            iconBg="bg-rose-100 text-brand-rose"
+          />
+          <StatCard
+            title="Draft"
+            value={formatCurrency(summaries.draft)}
+            icon={FileEdit}
+            borderClass="gradient-border-top-amber"
+            iconBg="bg-amber-100 text-brand-amber"
+          />
+        </div>
+      )}
 
       {items.length === 0 ? (
         <EmptyState

@@ -104,10 +104,12 @@ export default async function InvoiceDetailPage({
               <span className="text-muted-foreground">Subtotal</span>
               <span>{formatCurrency(invoice.subtotalNum)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">GST (18%)</span>
-              <span>{formatCurrency(invoice.taxNum)}</span>
-            </div>
+            {invoice.taxNum > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">GST (18%)</span>
+                <span>{formatCurrency(invoice.taxNum)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold text-brand-purple pt-2 border-t">
               <span>Total</span>
               <span>{formatCurrency(invoice.totalNum)}</span>

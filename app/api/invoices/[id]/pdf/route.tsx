@@ -40,7 +40,7 @@ export async function GET(
           qty: i.qty,
           unitPrice: i.unitPriceNum,
           total: i.totalNum,
-          gstPercent: 18, // Default GST rate for dental lab services
+          gstPercent: invoice.taxNum > 0 ? 18 : 0, // Default GST rate for dental lab services
         })),
         subtotal: invoice.subtotalNum,
         tax: invoice.taxNum,

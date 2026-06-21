@@ -19,6 +19,7 @@ type Props = {
   defaultDueDate?: string;
   invoiceId?: string;
   readOnly?: boolean;
+  defaultApplyGst?: boolean;
 };
 
 export function InvoiceForm({
@@ -30,11 +31,12 @@ export function InvoiceForm({
   defaultDueDate,
   invoiceId,
   readOnly,
+  defaultApplyGst = true,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [doctorId, setDoctorId] = useState(defaultDoctorId);
-  const [applyGst, setApplyGst] = useState(true);
+  const [applyGst, setApplyGst] = useState(defaultApplyGst);
   const [items, setItems] = useState<LineItemInput[]>(
     prefilledItems ?? [{ description: "", qty: 1, unitPrice: 0 }]
   );

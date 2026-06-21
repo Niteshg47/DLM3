@@ -171,13 +171,17 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
             <Text style={[styles.cell, { flex: 2 }]}>Description</Text>
             <Text style={styles.cellQty}>Qty</Text>
             <Text style={styles.cellPrice}>Rate (₹)</Text>
-            <Text style={styles.cellSmall}>GST%</Text>
-            <Text style={styles.cellSmall}>CGST (₹)</Text>
-            <Text style={styles.cellSmall}>SGST (₹)</Text>
+            {data.tax > 0 && (
+              <>
+                <Text style={styles.cellSmall}>GST%</Text>
+                <Text style={styles.cellSmall}>CGST (₹)</Text>
+                <Text style={styles.cellSmall}>SGST (₹)</Text>
+              </>
+            )}
             <Text style={styles.cellPrice}>Total (₹)</Text>
           </View>
           {data.items.map((item, i) => {
-            const itemGst = item.gstPercent || 18;
+            const itemGst = data.tax > 0 ? (item.gstPercent || 18) : 0;
             const itemCgst = (item.total * (itemGst / 100)) / 2;
             const itemSgst = (item.total * (itemGst / 100)) / 2;
             return (
@@ -185,9 +189,13 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
                 <Text style={[styles.cell, { flex: 2 }]}>{item.description}</Text>
                 <Text style={styles.cellQty}>{item.qty}</Text>
                 <Text style={styles.cellPrice}>{item.unitPrice.toFixed(2)}</Text>
-                <Text style={styles.cellSmall}>{itemGst}%</Text>
-                <Text style={styles.cellSmall}>{itemCgst.toFixed(2)}</Text>
-                <Text style={styles.cellSmall}>{itemSgst.toFixed(2)}</Text>
+                {data.tax > 0 && (
+                  <>
+                    <Text style={styles.cellSmall}>{itemGst}%</Text>
+                    <Text style={styles.cellSmall}>{itemCgst.toFixed(2)}</Text>
+                    <Text style={styles.cellSmall}>{itemSgst.toFixed(2)}</Text>
+                  </>
+                )}
                 <Text style={styles.cellPrice}>{item.total.toFixed(2)}</Text>
               </View>
             );

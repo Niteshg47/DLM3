@@ -14,7 +14,7 @@ export default async function DoctorCaseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   let id: string;
-  let session: Awaited<ReturnType<typeof auth>>;
+  let session: any;
   let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;
   let t: Awaited<ReturnType<typeof getTranslations>>;
   let tStatus: Awaited<ReturnType<typeof getTranslations>>;
@@ -38,7 +38,7 @@ export default async function DoctorCaseDetailPage({
   }
 
   let doctor: Awaited<ReturnType<typeof prisma.doctor.findUnique>> = null;
-  let caseData: Awaited<ReturnType<typeof prisma.case.findFirst>> = null;
+  let caseData: any = null;
 
   try {
     doctor = await prisma.doctor.findUnique({

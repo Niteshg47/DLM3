@@ -55,6 +55,10 @@ export default async function CasesPage({
     );
   }
 
+  const cleanParams = Object.fromEntries(
+    Object.entries(params || {}).filter(([_, v]) => v !== undefined && v !== null && v !== "")
+  );
+
   const page = parseInt(params.page ?? "1", 10);
 
   let items: Awaited<ReturnType<typeof getCases>>["items"] = [];
@@ -93,7 +97,7 @@ export default async function CasesPage({
         </Button>
       </PageHeader>
 
-      <CaseFilters doctors={doctors.map((d) => ({ id: d.id, name: d.user.name }))} />
+      <CaseFilters doctors={doctors.map((d) => ({ id: d.id, name: d.user?.name || "Unknown Doctor" }))} />
 
       {dataError ? (
         <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-4">
@@ -144,8 +148,8 @@ export default async function CasesPage({
                     <td className="p-3">{c.patientName}</td>
                     <td className="p-3 hidden md:table-cell">
                       <div className="flex items-center gap-2">
-                        <AvatarInitials name={c.doctor.user.name} size="sm" />
-                        <span>{c.doctor.user.name}</span>
+                        <AvatarInitials name={c.doctor?.user?.name || "Unknown"} size="sm" />
+                        <span>{c.doctor?.user?.name || "Unknown"}</span>
                       </div>
                     </td>
                     <td className="p-3 hidden sm:table-cell text-muted-foreground">
@@ -180,7 +184,7 @@ export default async function CasesPage({
         <div className="flex justify-between mt-4 text-sm">
           {page > 1 && (
             <Link
-              href={`/cases?${new URLSearchParams({ ...params, page: String(page - 1) } as Record<string, string>).toString()}`}
+              href={`/cases?${new URLSearchParams({ ...cleanParams, page: String(page - 1) } as Record<string, string>).toString()}`}
               className="text-brand-indigo hover:underline"
             >
               ← Previous
@@ -191,7 +195,7 @@ export default async function CasesPage({
           </span>
           {page < totalPages && (
             <Link
-              href={`/cases?${new URLSearchParams({ ...params, page: String(page + 1) } as Record<string, string>).toString()}`}
+              href={`/cases?${new URLSearchParams({ ...cleanParams, page: String(page + 1) } as Record<string, string>).toString()}`}
               className="text-brand-indigo hover:underline"
             >
               Next →
