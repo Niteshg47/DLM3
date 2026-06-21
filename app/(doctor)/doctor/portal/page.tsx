@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
 export default async function DoctorPortalPage() {
-  let session: Awaited<ReturnType<typeof auth>>;
+  let session;
   let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;
   let t: Awaited<ReturnType<typeof getTranslations>>;
   let tStatus: Awaited<ReturnType<typeof getTranslations>>;
@@ -35,7 +35,7 @@ export default async function DoctorPortalPage() {
   }
 
   let doctor: Awaited<ReturnType<typeof prisma.doctor.findUnique>> = null;
-  let cases: Awaited<ReturnType<typeof prisma.case.findMany>> = [];
+  let cases: any = [];
   let dataError: string | null = null;
 
   try {
@@ -103,7 +103,7 @@ export default async function DoctorPortalPage() {
               </tr>
             </thead>
             <tbody>
-              {cases.map((c, i) => (
+              {cases.map((c: any, i: number) => (
                 <tr
                   key={c.id}
                   className={`border-b transition-colors hover:bg-sky-50/50 ${
