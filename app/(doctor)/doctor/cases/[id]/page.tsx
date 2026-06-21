@@ -14,7 +14,7 @@ export default async function DoctorCaseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   let id: string;
-  let session: Awaited<ReturnType<typeof auth>> | null;
+  let session;
   let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;
   let t: Awaited<ReturnType<typeof getTranslations>>;
   let tStatus: Awaited<ReturnType<typeof getTranslations>>;
