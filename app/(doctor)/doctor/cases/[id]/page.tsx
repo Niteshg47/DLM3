@@ -13,36 +13,72 @@ export default async function DoctorCaseDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const session = await auth();
-  const tenant = await getTenantFromRequest();
-  const t = await getTranslations("cases");
-  const tStatus = await getTranslations("caseStatus");
+  let id: string;
+  let session: Awaited<ReturnType<typeof auth>>;
+  let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;
+  let t: Awaited<ReturnType<typeof getTranslations>>;
+  let tStatus: Awaited<ReturnType<typeof getTranslations>>;
 
-  const doctor = await prisma.doctor.findUnique({
-    where: { userId: session!.user.id },
-  });
+  try {
+    [{ id }, session, tenant, t, tStatus] = await Promise.all([
+      params,
+      auth(),
+      getTenantFromRequest(),
+      getTranslations("cases"),
+      getTranslations("caseStatus"),
+    ]);
+  } catch (err) {
+    console.error("[DoctorCaseDetailPage] init failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Unable to load case</h2>
+        <p className="text-sm text-red-600">
+          Could not connect to the workspace. Please refresh or contact support.
+        </p>
+      </div>
+    );
+  }
+
+  let doctor: Awaited<ReturnType<typeof prisma.doctor.findUnique>> = null;
+  let caseData: Awaited<ReturnType<typeof prisma.case.findFirst>> = null;
+
+  try {
+    doctor = await prisma.doctor.findUnique({
+      where: { userId: session!.user.id },
+    });
+
+    if (doctor) {
+      caseData = await prisma.case.findFirst({
+        where: { id, tenantId: tenant.id, doctorId: doctor.id },
+        select: {
+          caseNumber: true,
+          patientName: true,
+          patientAge: true,
+          patientGender: true,
+          caseType: true,
+          priority: true,
+          status: true,
+          receivedAt: true,
+          dueDate: true,
+          notes: true,
+          shade: true,
+          units: true,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("[DoctorCaseDetailPage] data fetch failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Failed to load case</h2>
+        <p className="text-sm text-red-600">
+          Could not load this case right now. Please try again shortly.
+        </p>
+      </div>
+    );
+  }
 
   if (!doctor) notFound();
-
-  const caseData = await prisma.case.findFirst({
-    where: { id, tenantId: tenant.id, doctorId: doctor.id },
-    select: {
-      caseNumber: true,
-      patientName: true,
-      patientAge: true,
-      patientGender: true,
-      caseType: true,
-      priority: true,
-      status: true,
-      receivedAt: true,
-      dueDate: true,
-      notes: true,
-      shade: true,
-      units: true,
-    },
-  });
-
   if (!caseData) notFound();
 
   return (

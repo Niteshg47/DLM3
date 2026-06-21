@@ -10,33 +10,64 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
 export default async function DoctorPortalPage() {
-  const session = await auth();
-  const tenant = await getTenantFromRequest();
-  const t = await getTranslations("doctor");
-  const tStatus = await getTranslations("caseStatus");
-  const tCases = await getTranslations("cases");
+  let session: Awaited<ReturnType<typeof auth>>;
+  let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;
+  let t: Awaited<ReturnType<typeof getTranslations>>;
+  let tStatus: Awaited<ReturnType<typeof getTranslations>>;
+  let tCases: Awaited<ReturnType<typeof getTranslations>>;
 
-  const doctor = await prisma.doctor.findUnique({
-    where: { userId: session!.user.id },
-  });
-
-  if (!doctor) {
-    return <p>Doctor profile not found.</p>;
+  try {
+    [session, tenant, t, tStatus, tCases] = await Promise.all([
+      auth(),
+      getTenantFromRequest(),
+      getTranslations("doctor"),
+      getTranslations("caseStatus"),
+      getTranslations("cases"),
+    ]);
+  } catch (err) {
+    console.error("[DoctorPortalPage] init failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Unable to load portal</h2>
+        <p className="text-sm text-red-600">
+          Could not connect to the workspace. Please refresh or contact support.
+        </p>
+      </div>
+    );
   }
 
-  const cases = await prisma.case.findMany({
-    where: { tenantId: tenant.id, doctorId: doctor.id },
-    orderBy: { receivedAt: "desc" },
-    select: {
-      id: true,
-      caseNumber: true,
-      patientName: true,
-      caseType: true,
-      status: true,
-      receivedAt: true,
-      dueDate: true,
-    },
-  });
+  let doctor: Awaited<ReturnType<typeof prisma.doctor.findUnique>> = null;
+  let cases: Awaited<ReturnType<typeof prisma.case.findMany>> = [];
+  let dataError: string | null = null;
+
+  try {
+    doctor = await prisma.doctor.findUnique({
+      where: { userId: session!.user.id },
+    });
+
+    if (doctor) {
+      cases = await prisma.case.findMany({
+        where: { tenantId: tenant.id, doctorId: doctor.id },
+        orderBy: { receivedAt: "desc" },
+        select: {
+          id: true,
+          caseNumber: true,
+          patientName: true,
+          caseType: true,
+          status: true,
+          receivedAt: true,
+          dueDate: true,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("[DoctorPortalPage] data fetch failed:", err);
+    dataError = "Failed to load your cases. Please try again shortly.";
+  }
+
+  if (!doctor && !dataError) {
+    return <p>Doctor profile not found.</p>;
+  }
 
   return (
     <div>
@@ -46,7 +77,12 @@ export default async function DoctorPortalPage() {
         </Button>
       </PageHeader>
 
-      {cases.length === 0 ? (
+      {dataError ? (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-4">
+          <h2 className="text-base font-semibold text-red-700 mb-1">Failed to load cases</h2>
+          <p className="text-sm text-red-600">{dataError}</p>
+        </div>
+      ) : cases.length === 0 ? (
         <EmptyState
           illustration="cases"
           title="No cases yet"
