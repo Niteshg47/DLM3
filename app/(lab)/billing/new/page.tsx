@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { InvoiceForm } from "@/components/billing/invoice-form";
 import { defaultLineItemForCaseType } from "@/lib/invoices";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewInvoicePage({
   searchParams,
 }: {

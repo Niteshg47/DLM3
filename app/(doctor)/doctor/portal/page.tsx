@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export default async function DoctorPortalPage() {
   let session;
   let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;

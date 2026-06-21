@@ -13,36 +13,61 @@ import { auth } from "@/lib/auth";
 import { getSignedUrl } from "@/lib/s3";
 import { CaseAttachments } from "@/components/lab/case-attachments";
 
+export const dynamic = "force-dynamic";
+
 export default async function CaseDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const tenant = await getTenantFromRequest();
-  const session = await auth();
+  let id = "";
+  let tenant;
+  let session;
+  let t;
+  let tStatus;
+  let tType;
+  let tPriority;
+  let caseData;
+  let filesWithUrls = [];
+
+  try {
+    ({ id } = await params);
+    tenant = await getTenantFromRequest();
+    session = await auth();
+    t = await getTranslations("cases");
+    tStatus = await getTranslations("caseStatus");
+    tType = await getTranslations("caseType");
+    tPriority = await getTranslations("priority");
+
+    caseData = await getCaseById(tenant.id, id);
+    if (!caseData) {
+      notFound();
+    }
+
+    filesWithUrls = await Promise.all(
+      (caseData.files || []).map(async (file) => ({
+        id: file.id,
+        name: file.name,
+        size: file.size,
+        mimeType: file.mimeType,
+        s3Key: file.s3Key,
+        createdAt: file.createdAt.toISOString(),
+        url: await getSignedUrl(file.s3Key),
+      }))
+    );
+  } catch (err) {
+    console.error("[CaseDetailPage] failed to load case data:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Failed to load case</h2>
+        <p className="text-sm text-red-600">
+          We could not load this case right now. Please refresh or try again shortly.
+        </p>
+      </div>
+    );
+  }
+
   const isAdmin = session?.user?.role === "ADMIN";
-
-  const t = await getTranslations("cases");
-  const tStatus = await getTranslations("caseStatus");
-  const tType = await getTranslations("caseType");
-  const tPriority = await getTranslations("priority");
-
-  const caseData = await getCaseById(tenant.id, id);
-  if (!caseData) notFound();
-
-  const filesWithUrls = await Promise.all(
-    (caseData.files || []).map(async (file) => ({
-      id: file.id,
-      name: file.name,
-      size: file.size,
-      mimeType: file.mimeType,
-      s3Key: file.s3Key,
-      createdAt: file.createdAt.toISOString(),
-      url: await getSignedUrl(file.s3Key),
-    }))
-  );
-
   const statusLabels: Record<string, string> = {
     RECEIVED: tStatus("RECEIVED"),
     IN_PROGRESS: tStatus("IN_PROGRESS"),

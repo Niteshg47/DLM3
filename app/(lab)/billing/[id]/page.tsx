@@ -8,6 +8,8 @@ import { InvoiceActions } from "@/components/billing/invoice-actions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { DisplayInvoiceStatus } from "@/lib/invoices";
 
+export const dynamic = "force-dynamic";
+
 const statusLabels: Record<DisplayInvoiceStatus, string> = {
   DRAFT: "Draft",
   SENT: "Sent",
@@ -20,10 +22,27 @@ export default async function InvoiceDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const tenant = await getTenantFromRequest();
-  const invoice = await getInvoiceById(tenant.id, id);
-  if (!invoice) notFound();
+  let invoice;
+  let tenant;
+
+  try {
+    const { id } = await params;
+    tenant = await getTenantFromRequest();
+    invoice = await getInvoiceById(tenant.id, id);
+    if (!invoice) {
+      notFound();
+    }
+  } catch (err) {
+    console.error("[InvoiceDetailPage] failed to load invoice:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Failed to load invoice</h2>
+        <p className="text-sm text-red-600">
+          We could not load this invoice right now. Please refresh or try again shortly.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>

@@ -4,6 +4,8 @@ import { getTenantFromRequest } from "@/lib/tenant-context";
 import { LabShell } from "@/components/lab/lab-shell";
 import { Providers } from "@/app/providers";
 
+export const dynamic = "force-dynamic";
+
 export default async function LabLayout({
   children,
 }: {

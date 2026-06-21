@@ -4,6 +4,8 @@ import { getTenantFromRequest } from "@/lib/tenant-context";
 import { DoctorShell } from "@/components/doctor/doctor-shell";
 import { Providers } from "@/app/providers";
 
+export const dynamic = "force-dynamic";
+
 export default async function DoctorLayout({
   children,
 }: {

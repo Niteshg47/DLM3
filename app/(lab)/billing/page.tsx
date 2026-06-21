@@ -10,6 +10,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Receipt, Wallet, AlertCircle, FileEdit, Download } from "lucide-react";
 import type { InvoiceStatus } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export default async function BillingPage({
   searchParams,
 }: {

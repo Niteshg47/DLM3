@@ -6,26 +6,48 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { InvoiceForm } from "@/components/billing/invoice-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditInvoicePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const tenant = await getTenantFromRequest();
-  const invoice = await getInvoiceById(tenant.id, id);
+  let tenant;
+  let invoice;
+  let doctors;
 
-  if (!invoice) notFound();
-  if (invoice.status !== "DRAFT") redirect(`/billing/${id}`);
+  try {
+    const { id } = await params;
+    tenant = await getTenantFromRequest();
+    invoice = await getInvoiceById(tenant.id, id);
 
-  const doctors = await prisma.doctor.findMany({
-    where: { tenantId: tenant.id },
-    include: { user: { select: { name: true } } },
-  });
+    if (!invoice) {
+      notFound();
+    }
+    if (invoice.status !== "DRAFT") {
+      redirect(`/billing/${id}`);
+    }
+
+    doctors = await prisma.doctor.findMany({
+      where: { tenantId: tenant.id },
+      include: { user: { select: { name: true } } },
+    });
+  } catch (err) {
+    console.error("[EditInvoicePage] failed to load invoice editor:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Failed to load invoice editor</h2>
+        <p className="text-sm text-red-600">
+          We could not load the editor right now. Please refresh or try again shortly.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <Link href={`/billing/${id}`} className="text-sm text-brand-indigo hover:underline">
+      <Link href={`/billing/${invoice.id}`} className="text-sm text-brand-indigo hover:underline">
         ← Invoice
       </Link>
       <PageHeader title={`Edit ${invoice.invoiceNumber}`} />
