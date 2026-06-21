@@ -38,7 +38,7 @@ export default async function DoctorCaseDetailPage({
   }
 
   let doctor: Awaited<ReturnType<typeof prisma.doctor.findUnique>> = null;
-  let caseData: Awaited<ReturnType<typeof prisma.case.findFirst>> = null;
+  let caseData: any = null;
 
   try {
     doctor = await prisma.doctor.findUnique({
