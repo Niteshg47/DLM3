@@ -19,18 +19,44 @@ export default async function BillingPage({
     page?: string;
   }>;
 }) {
-  const tenant = await getTenantFromRequest();
-  const params = await searchParams;
+  let tenant, params;
+  try {
+    [tenant, params] = await Promise.all([getTenantFromRequest(), searchParams]);
+  } catch (err) {
+    console.error("[BillingPage] init failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Unable to load workspace</h2>
+        <p className="text-sm text-red-600">Could not connect to the lab workspace. Please refresh.</p>
+      </div>
+    );
+  }
+
   const page = parseInt(params.page ?? "1", 10);
 
-  const [summaries, { items, total, totalPages }] = await Promise.all([
-    getInvoiceSummaries(tenant.id),
-    getInvoices(tenant.id, {
-      status: params.status as InvoiceStatus | "OVERDUE" | undefined,
-      doctorId: params.doctorId,
-      page,
-    }),
-  ]);
+  let summaries, items, total, totalPages;
+  try {
+    const [s, listResult] = await Promise.all([
+      getInvoiceSummaries(tenant.id),
+      getInvoices(tenant.id, {
+        status: params.status as InvoiceStatus | "OVERDUE" | undefined,
+        doctorId: params.doctorId,
+        page,
+      }),
+    ]);
+    summaries = s;
+    items = listResult.items;
+    total = listResult.total;
+    totalPages = listResult.totalPages;
+  } catch (err) {
+    console.error("[BillingPage] data fetch failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Failed to load invoices</h2>
+        <p className="text-sm text-red-600">There was a problem retrieving billing data. Please try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div>

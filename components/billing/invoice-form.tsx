@@ -38,6 +38,7 @@ export function InvoiceForm({
   const [items, setItems] = useState<LineItemInput[]>(
     prefilledItems ?? [{ description: "", qty: 1, unitPrice: 0 }]
   );
+  const [formError, setFormError] = useState<string | null>(null);
 
   const subtotal = items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
   const tax = applyGst ? subtotal * 0.18 : 0;
@@ -58,6 +59,22 @@ export function InvoiceForm({
   }
 
   function submit(sendNow: boolean) {
+    setFormError(null);
+
+    // Client-side validation before hitting the server action
+    if (!doctorId) {
+      setFormError("Please select a doctor before saving.");
+      return;
+    }
+    if (items.length === 0 || items.some((i) => !i.description.trim())) {
+      setFormError("Every line item needs a description.");
+      return;
+    }
+    if (items.some((i) => i.qty < 1 || i.unitPrice < 0)) {
+      setFormError("Quantity must be at least 1 and price cannot be negative.");
+      return;
+    }
+
     const fd = new FormData();
     fd.set("doctorId", doctorId);
     if (defaultCaseId) fd.set("caseId", defaultCaseId);
@@ -68,17 +85,58 @@ export function InvoiceForm({
     fd.set("items", JSON.stringify(items));
 
     startTransition(async () => {
-      if (invoiceId) {
-        await updateInvoiceAction(invoiceId, fd);
-        router.refresh();
-      } else {
-        await createInvoiceAction(fd);
+      try {
+        if (invoiceId) {
+          const result = await updateInvoiceAction(invoiceId, fd);
+          if (result?.error) {
+            setFormError(
+              typeof result.error === "string"
+                ? result.error === "not_editable"
+                  ? "This invoice can no longer be edited (already sent or paid)."
+                  : result.error
+                : "Could not save changes. Please check all fields."
+            );
+            return;
+          }
+          router.refresh();
+        } else {
+          const result = await createInvoiceAction(fd);
+          // createInvoiceAction redirects on success (throws NEXT_REDIRECT),
+          // so reaching here with a result means it returned an error instead.
+          if (result?.error) {
+            setFormError(
+              typeof result.error === "string"
+                ? result.error
+                : "Could not create invoice. Please check all fields and try again."
+            );
+          }
+        }
+      } catch (err: any) {
+        // Next.js redirect() throws internally on success — let it propagate.
+        if (err?.digest?.includes("NEXT_REDIRECT")) {
+          throw err;
+        }
+        console.error("[InvoiceForm] submit failed:", err);
+        setFormError(err?.message || "An unexpected error occurred. Please try again.");
       }
     });
   }
 
   return (
     <div className="space-y-6 rounded-xl bg-white p-6 shadow-card">
+      {formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm flex justify-between items-start">
+          <span>{formError}</span>
+          <button
+            type="button"
+            onClick={() => setFormError(null)}
+            className="text-red-900 font-bold ml-3 shrink-0"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="doctorId">Doctor</Label>

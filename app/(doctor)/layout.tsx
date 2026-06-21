@@ -18,7 +18,13 @@ export default async function DoctorLayout({
     redirect("/dashboard");
   }
 
-  const tenant = await getTenantFromRequest();
+  let tenant;
+  try {
+    tenant = await getTenantFromRequest();
+  } catch (err) {
+    console.error("[DoctorLayout] getTenantFromRequest failed:", err);
+    redirect("/login");
+  }
 
   if (tenant.id !== session.user.tenantId) {
     redirect("/login");

@@ -51,28 +51,34 @@ export async function createInvoiceAction(formData: FormData) {
   const invoiceNumber = await generateInvoiceNumber(tenant.id);
   const status: InvoiceStatus = parsed.data.sendNow ? "SENT" : "DRAFT";
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      tenantId: tenant.id,
-      doctorId: parsed.data.doctorId,
-      caseId: parsed.data.caseId || null,
-      invoiceNumber,
-      issuedAt: new Date(parsed.data.issuedAt),
-      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-      status,
-      subtotal,
-      tax,
-      total,
-      items: {
-        create: parsed.data.items.map((item: LineItemInput) => ({
-          description: item.description,
-          qty: item.qty,
-          unitPrice: item.unitPrice,
-          total: item.qty * item.unitPrice,
-        })),
+  let invoice;
+  try {
+    invoice = await prisma.invoice.create({
+      data: {
+        tenantId: tenant.id,
+        doctorId: parsed.data.doctorId,
+        caseId: parsed.data.caseId || null,
+        invoiceNumber,
+        issuedAt: new Date(parsed.data.issuedAt),
+        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+        status,
+        subtotal,
+        tax,
+        total,
+        items: {
+          create: parsed.data.items.map((item: LineItemInput) => ({
+            description: item.description,
+            qty: item.qty,
+            unitPrice: item.unitPrice,
+            total: item.qty * item.unitPrice,
+          })),
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.error("[createInvoiceAction] DB write failed:", err);
+    return { error: "Failed to save invoice — please verify the selected doctor and try again." };
+  }
 
   if (parsed.data.caseId) {
     await prisma.case.update({

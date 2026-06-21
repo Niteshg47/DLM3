@@ -13,6 +13,8 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Paperclip } from "lucide-react";
 import type { CaseStatus, CaseType, CasePriority } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export default async function CasesPage({
   searchParams,
 }: {
@@ -25,28 +27,63 @@ export default async function CasesPage({
     page?: string;
   }>;
 }) {
-  const tenant = await getTenantFromRequest();
-  const params = await searchParams;
-  const t = await getTranslations("cases");
-  const tStatus = await getTranslations("caseStatus");
-  const tType = await getTranslations("caseType");
-  const tPriority = await getTranslations("priority");
+  let tenant: Awaited<ReturnType<typeof getTenantFromRequest>>;
+  let params: Awaited<typeof searchParams>;
+  let t: Awaited<ReturnType<typeof getTranslations>>;
+  let tStatus: Awaited<ReturnType<typeof getTranslations>>;
+  let tType: Awaited<ReturnType<typeof getTranslations>>;
+  let tPriority: Awaited<ReturnType<typeof getTranslations>>;
+
+  try {
+    [tenant, params, t, tStatus, tType, tPriority] = await Promise.all([
+      getTenantFromRequest(),
+      searchParams,
+      getTranslations("cases"),
+      getTranslations("caseStatus"),
+      getTranslations("caseType"),
+      getTranslations("priority"),
+    ]);
+  } catch (err) {
+    console.error("[CasesPage] init failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Unable to load workspace</h2>
+        <p className="text-sm text-red-600">
+          Could not connect to the lab workspace. Please refresh or contact support.
+        </p>
+      </div>
+    );
+  }
 
   const page = parseInt(params.page ?? "1", 10);
 
-  const { items, total, totalPages } = await getCases(tenant.id, {
-    search: params.search,
-    status: params.status as CaseStatus | undefined,
-    priority: params.priority as CasePriority | undefined,
-    caseType: params.caseType as CaseType | undefined,
-    doctorId: params.doctorId,
-    page,
-  });
+  let items: Awaited<ReturnType<typeof getCases>>["items"] = [];
+  let total = 0;
+  let totalPages = 1;
+  let doctors: { id: string; user: { name: string } }[] = [];
+  let dataError: string | null = null;
 
-  const doctors = await prisma.doctor.findMany({
-    where: { tenantId: tenant.id },
-    include: { user: { select: { name: true } } },
-  });
+  try {
+    const result = await getCases(tenant.id, {
+      search: params.search,
+      status: params.status as CaseStatus | undefined,
+      priority: params.priority as CasePriority | undefined,
+      caseType: params.caseType as CaseType | undefined,
+      doctorId: params.doctorId,
+      page,
+    });
+    items = result.items;
+    total = result.total;
+    totalPages = result.totalPages;
+
+    doctors = await prisma.doctor.findMany({
+      where: { tenantId: tenant.id },
+      include: { user: { select: { name: true } } },
+    });
+  } catch (err) {
+    console.error("[CasesPage] data fetch failed:", err);
+    dataError = "Failed to load cases from the database. Please try again shortly.";
+  }
 
   return (
     <div>
@@ -58,7 +95,12 @@ export default async function CasesPage({
 
       <CaseFilters doctors={doctors.map((d) => ({ id: d.id, name: d.user.name }))} />
 
-      {items.length === 0 ? (
+      {dataError ? (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-4">
+          <h2 className="text-base font-semibold text-red-700 mb-1">Failed to load cases</h2>
+          <p className="text-sm text-red-600">{dataError}</p>
+        </div>
+      ) : items.length === 0 ? (
         <EmptyState
           illustration="cases"
           title="No cases found"

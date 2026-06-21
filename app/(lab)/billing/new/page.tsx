@@ -11,13 +11,34 @@ export default async function NewInvoicePage({
 }: {
   searchParams: Promise<{ caseId?: string }>;
 }) {
-  const tenant = await getTenantFromRequest();
-  const { caseId } = await searchParams;
+  let tenant, caseId;
+  try {
+    [tenant, { caseId }] = await Promise.all([getTenantFromRequest(), searchParams]);
+  } catch (err) {
+    console.error("[NewInvoicePage] init failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Unable to load workspace</h2>
+        <p className="text-sm text-red-600">Could not connect to the lab workspace. Please refresh.</p>
+      </div>
+    );
+  }
 
-  const doctors = await prisma.doctor.findMany({
-    where: { tenantId: tenant.id },
-    include: { user: { select: { name: true } } },
-  });
+  let doctors;
+  try {
+    doctors = await prisma.doctor.findMany({
+      where: { tenantId: tenant.id },
+      include: { user: { select: { name: true } } },
+    });
+  } catch (err) {
+    console.error("[NewInvoicePage] doctor fetch failed:", err);
+    return (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-8 text-center mt-8">
+        <h2 className="text-lg font-semibold text-red-700 mb-2">Failed to load doctors</h2>
+        <p className="text-sm text-red-600">There was a problem retrieving data. Please try again.</p>
+      </div>
+    );
+  }
 
   let prefilled:
     | {

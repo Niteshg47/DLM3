@@ -12,7 +12,7 @@ import {
 } from "@/lib/validations/case";
 import { generateCaseNumber } from "@/lib/cases";
 import { logAudit } from "@/lib/audit";
-import { notifyDoctorUser } from "@/lib/notifications";
+import { notifyDoctorUser, notifyLabTeam } from "@/lib/notifications";
 import type { CaseStatus } from "@prisma/client";
 
 async function assertTenantAccess(tenantId: string) {
@@ -320,7 +320,17 @@ export async function doctorSubmitCaseAction(formData: FormData) {
     meta: { caseNumber, source: "doctor_portal" },
   });
 
+  // Notify lab admin + staff so the new case is visible immediately
+  await notifyLabTeam({
+    tenantId: tenant.id,
+    type: "CASE_SUBMITTED",
+    message: `New case ${caseNumber} submitted by Dr. ${session.user.name ?? "Unknown"} for ${parsed.data.patientName}.`,
+  });
+
   revalidatePath("/doctor/portal");
+  revalidatePath("/cases");
+  revalidatePath("/dashboard");
+  revalidatePath("/staff");
   return { success: true, id: newCase.id };
 }
 

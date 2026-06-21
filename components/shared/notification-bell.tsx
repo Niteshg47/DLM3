@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Bell, CheckCheck, FileText, Receipt, FolderOpen, ListTodo } from "lucide-react";
+import { Bell, CheckCheck, FileText, Receipt, FolderOpen, ListTodo, FilePlus2 } from "lucide-react";
 import { markAllNotificationsRead, markNotificationRead } from "@/app/actions/notifications";
 import { cn } from "@/lib/utils";
 
 const typeIcons: Record<string, typeof Bell> = {
   CASE_STATUS: FolderOpen,
+  CASE_SUBMITTED: FilePlus2,
   INVOICE_SENT: Receipt,
   TASK_ASSIGNED: ListTodo,
   default: FileText,
