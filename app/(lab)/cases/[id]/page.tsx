@@ -67,7 +67,7 @@ export default async function CaseDetailPage({
     );
   }
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
   const statusLabels: Record<string, string> = {
     RECEIVED: tStatus("RECEIVED"),
     IN_PROGRESS: tStatus("IN_PROGRESS"),

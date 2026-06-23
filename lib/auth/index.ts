@@ -33,7 +33,7 @@ export async function requireDoctorRole() {
 
 export async function requireAdminRole() {
   const session = await requireSession();
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
     throw new Error("FORBIDDEN");
   }
   return session;
