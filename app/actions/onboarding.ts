@@ -15,6 +15,7 @@ export async function completeOnboardingAction(formData: FormData) {
   const parsed = onboardingSchema.safeParse({
     name: formData.get("name"),
     brandColor: formData.get("brandColor"),
+    themeSlug: formData.get("themeSlug"),
     logoUrl: formData.get("logoUrl") || null,
   });
 
@@ -27,6 +28,7 @@ export async function completeOnboardingAction(formData: FormData) {
     data: {
       name: parsed.data.name,
       brandColor: parsed.data.brandColor,
+      themeSlug: parsed.data.themeSlug,
       logoUrl: parsed.data.logoUrl,
       onboardingDone: true,
     },

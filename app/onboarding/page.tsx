@@ -20,6 +20,7 @@ export default async function OnboardingPage() {
         <OnboardingForm
           defaultName={tenant.name}
           defaultColor={tenant.brandColor}
+          defaultTheme={tenant.themeSlug}
         />
       </div>
     </div>

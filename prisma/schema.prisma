@@ -11,6 +11,20 @@ enum UserRole {
   ADMIN
   LAB_STAFF
   DOCTOR
+  SUPER_ADMIN
+}
+
+enum ThemeSlug {
+  OCEAN_TEAL
+  ROYAL_BLUE
+  EMERALD_DENT
+  INDIGO_PREMIUM
+  RUBY_CARE
+  CHARCOAL_TECH
+  VIOLET_GLOW
+  AMBER_WARM
+  SKY_FRESH
+  MAROON_CLASSIC
 }
 
 enum CaseType {
@@ -62,6 +76,7 @@ model Tenant {
   name            String
   logoUrl         String?
   brandColor      String     @default("#0ea5e9")
+  themeSlug       ThemeSlug  @default(OCEAN_TEAL)
   customDomain    String?
   plan            TenantPlan @default(STARTER)
   gstNumber       String?
