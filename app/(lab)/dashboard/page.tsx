@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
   const tStatus = await getTranslations("caseStatus");
   const stats = await getDashboardStats(tenant.id);
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
 
   const statusLabels: Record<string, string> = {
     RECEIVED: tStatus("RECEIVED"),

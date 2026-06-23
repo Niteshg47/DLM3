@@ -10,9 +10,11 @@ import { Card, CardContent } from "@/components/ui/card";
 export function OnboardingForm({
   defaultName,
   defaultColor,
+  defaultTheme,
 }: {
   defaultName: string;
   defaultColor: string;
+  defaultTheme?: string;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -47,6 +49,26 @@ export function OnboardingForm({
               />
               <Input id="brandColor" name="brandColor" defaultValue={defaultColor} />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="themeSlug">Theme</Label>
+            <select
+              id="themeSlug"
+              name="themeSlug"
+              defaultValue={defaultTheme || "OCEAN_TEAL"}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring"
+            >
+              <option value="OCEAN_TEAL">Ocean Teal</option>
+              <option value="ROYAL_BLUE">Royal Blue</option>
+              <option value="EMERALD_DENT">Emerald Dent</option>
+              <option value="INDIGO_PREMIUM">Indigo Premium</option>
+              <option value="RUBY_CARE">Ruby Care</option>
+              <option value="CHARCOAL_TECH">Charcoal Tech</option>
+              <option value="VIOLET_GLOW">Violet Glow</option>
+              <option value="AMBER_WARM">Amber Warm</option>
+              <option value="SKY_FRESH">Sky Fresh</option>
+              <option value="MAROON_CLASSIC">Maroon Classic</option>
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="logoUrl">Logo URL (optional)</Label>

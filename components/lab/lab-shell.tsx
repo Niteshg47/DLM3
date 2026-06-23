@@ -33,7 +33,7 @@ export async function LabShell({
       userName={userName}
       userRole={userRole}
       userId={userId}
-      isAdmin={userRole === "ADMIN"}
+      isAdmin={userRole === "ADMIN" || userRole === "SUPER_ADMIN"}
       notifications={notifications.map((n) => ({
         id: n.id,
         type: n.type,

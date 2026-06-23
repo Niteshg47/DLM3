@@ -52,8 +52,8 @@ export async function loginAction(
     return { error: "invalid_credentials" };
   }
 
-  // If user is ADMIN, generate and send OTP
-  if (user.role === "ADMIN") {
+  // If user is ADMIN or SUPER_ADMIN, generate and send OTP
+  if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
     const otp = await generateAndStoreOtp(tenantId, user.id, email);
     await sendOtpEmail(email, otp);
     

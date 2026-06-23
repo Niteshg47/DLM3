@@ -14,7 +14,7 @@ async function checkAdminAccess(tenantId: string) {
     redirect("/login");
   }
 
-  if (session.user.tenantId !== tenantId || session.user.role !== "ADMIN") {
+  if (session.user.tenantId !== tenantId || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) {
     throw new Error("Unauthorized: Only admins can manage staff");
   }
 

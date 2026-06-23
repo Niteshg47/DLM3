@@ -4,19 +4,26 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { requireTenant } from "@/lib/tenant";
-import { onboardingSchema } from "@/lib/validations/auth";
+import { tenantSettingsSchema } from "@/lib/validations/auth";
 import { logAudit } from "@/lib/audit";
 import { redirect } from "next/navigation";
 
-export async function completeOnboardingAction(formData: FormData) {
+export async function updateTenantSettingsAction(formData: FormData) {
   const session = await requireAdminRole();
   const tenant = await requireTenant();
 
-  const parsed = onboardingSchema.safeParse({
+  const customDomainRaw = formData.get("customDomain");
+  const customDomain = typeof customDomainRaw === "string" && customDomainRaw.trim() !== "" ? customDomainRaw.trim() : null;
+
+  const parsed = tenantSettingsSchema.safeParse({
     name: formData.get("name"),
     brandColor: formData.get("brandColor"),
     themeSlug: formData.get("themeSlug"),
     logoUrl: formData.get("logoUrl") || null,
+    gstNumber: formData.get("gstNumber") || null,
+    address: formData.get("address") || null,
+    customDomain,
+    whatsappEnabled: formData.get("whatsappEnabled") === "true",
   });
 
   if (!parsed.success) {
@@ -30,7 +37,10 @@ export async function completeOnboardingAction(formData: FormData) {
       brandColor: parsed.data.brandColor,
       themeSlug: parsed.data.themeSlug,
       logoUrl: parsed.data.logoUrl,
-      onboardingDone: true,
+      gstNumber: parsed.data.gstNumber,
+      address: parsed.data.address,
+      customDomain: parsed.data.customDomain,
+      whatsappEnabled: parsed.data.whatsappEnabled,
     },
   });
 
@@ -40,9 +50,9 @@ export async function completeOnboardingAction(formData: FormData) {
     action: "UPDATE",
     entity: "Tenant",
     entityId: tenant.id,
-    meta: { onboarding: true },
+    meta: { settings: true },
   });
 
-  revalidatePath("/", "layout");
-  redirect("/dashboard");
+  revalidatePath("/settings");
+  return { success: true };
 }

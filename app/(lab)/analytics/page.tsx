@@ -5,7 +5,7 @@ import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
 
 export default async function AnalyticsPage() {
   const session = await auth();
-  if (session?.user.role !== "ADMIN") {
+  if (session?.user.role !== "ADMIN" && session?.user.role !== "SUPER_ADMIN") {
     redirect("/dashboard");
   }
 

@@ -62,7 +62,8 @@ export function LabShellClient({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const items = navItems.filter((n) => !n.adminOnly || isAdmin);
+  const isPrivilegedAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const items = navItems.filter((n) => !n.adminOnly || isPrivilegedAdmin);
 
   const NavLinks = ({ mobile }: { mobile?: boolean }) => (
     <>
